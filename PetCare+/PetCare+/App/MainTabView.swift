@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct MainTabView: View {
     // MARK: - Properties
@@ -17,6 +18,7 @@ struct MainTabView: View {
     enum Tab {
         case home
         case routine
+        case exercise
         case chat
         case calendar
         case profile
@@ -39,6 +41,13 @@ struct MainTabView: View {
                     Label("Rutinler", systemImage: "list.clipboard.fill")
                 }
                 .tag(Tab.routine)
+
+            // Exercise Tab
+            ExerciseTabView()
+                .tabItem {
+                    Label("Egzersiz", systemImage: "figure.run")
+                }
+                .tag(Tab.exercise)
 
             // AI Chat Tab
             PetChatView()
@@ -66,6 +75,21 @@ struct MainTabView: View {
 }
 
 // MARK: - Placeholder Views (Geçici)
+
+struct ExerciseTabView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var pets: [Pet]
+    @State private var selectedPet: Pet?
+
+    var body: some View {
+        ExerciseView(selectedPet: $selectedPet, modelContext: modelContext)
+            .onAppear {
+                if selectedPet == nil, let firstPet = pets.first {
+                    selectedPet = firstPet
+                }
+            }
+    }
+}
 
 struct PetChatView: View {
     var body: some View {

@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftData
+import SwiftUI
 
 // MARK: - Exercise Type
 
@@ -40,6 +41,18 @@ enum ExerciseType: String, Codable, CaseIterable {
         case .swimming: return "cyan"
         case .fetch: return "yellow"
         case .other: return "gray"
+        }
+    }
+
+    var swiftUIColor: Color {
+        switch self {
+        case .walk: return .green
+        case .run: return .orange
+        case .play: return .purple
+        case .training: return .blue
+        case .swimming: return .cyan
+        case .fetch: return .yellow
+        case .other: return .gray
         }
     }
 }

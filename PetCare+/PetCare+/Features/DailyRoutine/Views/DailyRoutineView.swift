@@ -143,7 +143,8 @@ struct DailyRoutineView: View {
             HStack(spacing: AppSpacing.sm) {
                 ForEach(DailyRoutineViewModel.RoutineFilter.allCases, id: \.self) { filter in
                     FilterChip(
-                        filter: filter,
+                        title: filter.rawValue,
+                        icon: filter.icon,
                         isSelected: viewModel.selectedFilter == filter
                     ) {
                         viewModel.selectedFilter = filter
@@ -250,32 +251,6 @@ struct DailyRoutineView: View {
 
             Spacer()
         }
-    }
-}
-
-// MARK: - Filter Chip
-
-struct FilterChip: View {
-    let filter: DailyRoutineViewModel.RoutineFilter
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: filter.icon)
-                    .font(.caption)
-
-                Text(filter.rawValue)
-                    .font(AppFonts.subheadline)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(isSelected ? AppColors.accent : AppColors.secondaryBackground)
-            .foregroundColor(isSelected ? .white : AppColors.textPrimary)
-            .cornerRadius(20)
-        }
-        .buttonStyle(.plain)
     }
 }
 

@@ -19,16 +19,16 @@ struct ExerciseCard: View {
             HStack {
                 Image(systemName: exercise.type.icon)
                     .font(.title2)
-                    .foregroundStyle(exercise.type.color)
+                    .foregroundStyle(exercise.type.swiftUIColor)
                     .frame(width: 40, height: 40)
-                    .background(exercise.type.color.opacity(0.1))
+                    .background(exercise.type.swiftUIColor.opacity(0.1))
                     .clipShape(Circle())
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(exercise.type.rawValue)
+                    Text(exercise.title)
                         .font(.headline)
 
-                    Text(formatDate(exercise.date))
+                    Text(formatDate(exercise.startDate))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -58,22 +58,22 @@ struct ExerciseCard: View {
             HStack(spacing: 16) {
                 StatItem(
                     icon: "clock.fill",
-                    value: formatDuration(exercise.duration),
+                    value: exercise.durationString,
                     label: "Süre"
                 )
 
-                if let distance = exercise.distance, distance > 0 {
+                if exercise.distance > 0 {
                     Divider()
                         .frame(height: 30)
 
                     StatItem(
                         icon: "location.fill",
-                        value: String(format: "%.2f km", distance),
+                        value: exercise.distanceString,
                         label: "Mesafe"
                     )
                 }
 
-                if let notes = exercise.notes, !notes.isEmpty {
+                if !exercise.notes.isEmpty {
                     Divider()
                         .frame(height: 30)
 
@@ -86,8 +86,8 @@ struct ExerciseCard: View {
             }
 
             // Notes
-            if let notes = exercise.notes, !notes.isEmpty {
-                Text(notes)
+            if !exercise.notes.isEmpty {
+                Text(exercise.notes)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .padding(.top, 4)
@@ -117,18 +117,6 @@ struct ExerciseCard: View {
         } else {
             formatter.dateFormat = "dd MMM, HH:mm"
             return formatter.string(from: date)
-        }
-    }
-
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let hours = Int(duration) / 3600
-        let minutes = (Int(duration) % 3600) / 60
-        let seconds = Int(duration) % 60
-
-        if hours > 0 {
-            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            return String(format: "%d:%02d", minutes, seconds)
         }
     }
 }
@@ -169,8 +157,8 @@ struct EditExerciseSheet: View {
 
     init(exercise: Exercise) {
         self.exercise = exercise
-        _distance = State(initialValue: exercise.distance != nil ? String(format: "%.2f", exercise.distance!) : "")
-        _notes = State(initialValue: exercise.notes ?? "")
+        _distance = State(initialValue: exercise.distance > 0 ? String(format: "%.2f", exercise.distance) : "")
+        _notes = State(initialValue: exercise.notes)
     }
 
     var body: some View {
@@ -187,14 +175,14 @@ struct EditExerciseSheet: View {
                     HStack {
                         Text("Tarih")
                         Spacer()
-                        Text(formatDate(exercise.date))
+                        Text(exercise.startDateString)
                             .foregroundStyle(.secondary)
                     }
 
                     HStack {
                         Text("Süre")
                         Spacer()
-                        Text(formatDuration(exercise.duration))
+                        Text(exercise.durationString)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -227,28 +215,8 @@ struct EditExerciseSheet: View {
     }
 
     private func saveChanges() {
-        let distanceValue = Double(distance.replacingOccurrences(of: ",", with: "."))
+        let distanceValue = Double(distance.replacingOccurrences(of: ",", with: ".")) ?? 0
         exercise.distance = distanceValue
-        exercise.notes = notes.isEmpty ? nil : notes
-    }
-
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd MMMM yyyy, HH:mm"
-        return formatter.string(from: date)
-    }
-
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let hours = Int(duration) / 3600
-        let minutes = (Int(duration) % 3600) / 60
-        let seconds = Int(duration) % 60
-
-        if hours > 0 {
-            return String(format: "%d saat %d dakika", hours, minutes)
-        } else if minutes > 0 {
-            return String(format: "%d dakika %d saniye", minutes, seconds)
-        } else {
-            return String(format: "%d saniye", seconds)
-        }
+        exercise.notes = notes
     }
 }

@@ -29,27 +29,27 @@ class ExerciseViewModel: ObservableObject {
 
     enum ExerciseFilter: String, CaseIterable {
         case all = "Tümü"
-        case walking = "Yürüyüş"
-        case running = "Koşu"
-        case playing = "Oyun"
+        case walk = "Yürüyüş"
+        case run = "Koşu"
+        case play = "Oyun"
         case training = "Eğitim"
 
         var icon: String {
             switch self {
             case .all: return "list.bullet"
-            case .walking: return "figure.walk"
-            case .running: return "figure.run"
-            case .playing: return "sportscourt"
+            case .walk: return "figure.walk"
+            case .run: return "figure.run"
+            case .play: return "sportscourt"
             case .training: return "figure.strengthtraining.traditional"
             }
         }
 
-        var exerciseType: Exercise.ExerciseType? {
+        var exerciseType: ExerciseType? {
             switch self {
             case .all: return nil
-            case .walking: return .walking
-            case .running: return .running
-            case .playing: return .playing
+            case .walk: return .walk
+            case .run: return .run
+            case .play: return .play
             case .training: return .training
             }
         }
@@ -68,22 +68,22 @@ class ExerciseViewModel: ObservableObject {
         exercises.count
     }
 
-    var totalDuration: TimeInterval {
+    var totalDuration: Int {
         exercises.reduce(0) { $0 + $1.duration }
     }
 
-    var averageDuration: TimeInterval {
+    var averageDuration: Int {
         guard !exercises.isEmpty else { return 0 }
-        return totalDuration / Double(exercises.count)
+        return totalDuration / exercises.count
     }
 
     var thisWeekExercises: [Exercise] {
         let calendar = Calendar.current
         let weekAgo = calendar.date(byAdding: .day, value: -7, to: Date())!
-        return exercises.filter { $0.date >= weekAgo }
+        return exercises.filter { $0.startDate >= weekAgo }
     }
 
-    var thisWeekDuration: TimeInterval {
+    var thisWeekDuration: Int {
         thisWeekExercises.reduce(0) { $0 + $1.duration }
     }
 
@@ -99,7 +99,7 @@ class ExerciseViewModel: ObservableObject {
     func loadExercises(for pet: Pet) {
         isLoading = true
         currentPet = pet
-        exercises = pet.exercises.sorted { $0.date > $1.date }
+        exercises = pet.exercises.sorted { $0.startDate > $1.startDate }
         applyFilter()
         isLoading = false
     }
@@ -116,8 +116,9 @@ class ExerciseViewModel: ObservableObject {
         // Search text'e göre
         if !searchText.isEmpty {
             filtered = filtered.filter {
-                $0.notes?.localizedCaseInsensitiveContains(searchText) ?? false ||
-                $0.type.rawValue.localizedCaseInsensitiveContains(searchText)
+                $0.notes.localizedCaseInsensitiveContains(searchText) ||
+                $0.type.rawValue.localizedCaseInsensitiveContains(searchText) ||
+                $0.title.localizedCaseInsensitiveContains(searchText)
             }
         }
 
@@ -125,14 +126,14 @@ class ExerciseViewModel: ObservableObject {
     }
 
     /// Yeni exercise başlat
-    func startExercise(type: Exercise.ExerciseType) {
+    func startExercise(type: ExerciseType) {
         guard let currentPet else { return }
 
+        let now = Date()
         let exercise = Exercise(
             type: type,
-            duration: 0,
-            distance: 0,
-            date: Date(),
+            startDate: now,
+            endDate: now,
             pet: currentPet
         )
 
@@ -141,7 +142,7 @@ class ExerciseViewModel: ObservableObject {
         isExerciseActive = true
         isPaused = false
         elapsedTime = 0
-        startDate = Date()
+        startDate = now
 
         startTimer()
     }
@@ -160,14 +161,22 @@ class ExerciseViewModel: ObservableObject {
     }
 
     /// Exercise'ı bitir
-    func stopExercise(distance: Double? = nil, notes: String? = nil) {
+    func stopExercise(distance: Double? = nil, notes: String? = nil, intensity: ExerciseIntensity = .moderate) {
         guard let activeExercise else { return }
 
         stopTimer()
 
-        activeExercise.duration = elapsedTime
-        activeExercise.distance = distance
-        activeExercise.notes = notes
+        let endDate = Date()
+        activeExercise.endDate = endDate
+        activeExercise.duration = Int(elapsedTime / 60) // Convert to minutes
+        activeExercise.distance = distance ?? 0
+        activeExercise.notes = notes ?? ""
+        activeExercise.intensity = intensity
+
+        // Calculate calories if pet weight is available
+        if let petWeight = currentPet?.weight {
+            activeExercise.calories = activeExercise.calculateCalories(petWeight: petWeight)
+        }
 
         saveContext()
 
@@ -209,8 +218,8 @@ class ExerciseViewModel: ObservableObject {
 
     /// Exercise güncelle
     func updateExercise(_ exercise: Exercise, distance: Double?, notes: String?) {
-        exercise.distance = distance
-        exercise.notes = notes
+        exercise.distance = distance ?? 0
+        exercise.notes = notes ?? ""
         saveContext()
         applyFilter()
     }
@@ -219,8 +228,10 @@ class ExerciseViewModel: ObservableObject {
 
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self, let startDate = self.startDate else { return }
-            self.elapsedTime = Date().timeIntervalSince(startDate)
+            Task { @MainActor [weak self] in
+                guard let self, let startDate = self.startDate else { return }
+                self.elapsedTime = Date().timeIntervalSince(startDate)
+            }
         }
     }
 
@@ -239,7 +250,7 @@ class ExerciseViewModel: ObservableObject {
 
     // MARK: - Deinitializer
 
-    deinit {
-        stopTimer()
+    nonisolated deinit {
+        timer?.invalidate()
     }
 }

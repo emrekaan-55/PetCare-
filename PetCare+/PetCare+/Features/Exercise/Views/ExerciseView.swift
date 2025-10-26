@@ -10,23 +10,20 @@ import SwiftData
 
 struct ExerciseView: View {
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel: ExerciseViewModel
     @Binding var selectedPet: Pet?
+    @StateObject private var viewModel: ExerciseViewModel
 
     @State private var showingAddExercise = false
-    @State private var selectedExerciseType: Exercise.ExerciseType = .walking
 
-    init(selectedPet: Binding<Pet?>) {
+    init(selectedPet: Binding<Pet?>, modelContext: ModelContext) {
         self._selectedPet = selectedPet
-        _viewModel = StateObject(wrappedValue: ExerciseViewModel(context: ModelContext(
-            try! ModelContainer(for: Pet.self, DailyRoutine.self, Exercise.self, Appointment.self).mainContext
-        )))
+        _viewModel = StateObject(wrappedValue: ExerciseViewModel(context: modelContext))
     }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                if let pet = selectedPet {
+                if selectedPet != nil {
                     ScrollView {
                         VStack(spacing: 20) {
                             // Stats Section
@@ -106,21 +103,21 @@ struct ExerciseView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack(spacing: 12) {
-                StatCard(
+                ExerciseStatCard(
                     title: "Toplam Süre",
                     value: formatDuration(viewModel.thisWeekDuration),
                     icon: "clock.fill",
                     color: .blue
                 )
 
-                StatCard(
+                ExerciseStatCard(
                     title: "Egzersiz",
                     value: "\(viewModel.thisWeekExercises.count)",
                     icon: "figure.run",
                     color: .green
                 )
 
-                StatCard(
+                ExerciseStatCard(
                     title: "Ortalama",
                     value: formatDuration(viewModel.averageDuration),
                     icon: "chart.bar.fill",
@@ -145,17 +142,17 @@ struct ExerciseView: View {
                 QuickExerciseButton(
                     title: "Yürüyüş",
                     icon: "figure.walk",
-                    color: .blue
+                    color: .green
                 ) {
-                    viewModel.startExercise(type: .walking)
+                    viewModel.startExercise(type: .walk)
                 }
 
                 QuickExerciseButton(
                     title: "Koşu",
                     icon: "figure.run",
-                    color: .green
+                    color: .orange
                 ) {
-                    viewModel.startExercise(type: .running)
+                    viewModel.startExercise(type: .run)
                 }
 
                 QuickExerciseButton(
@@ -163,13 +160,13 @@ struct ExerciseView: View {
                     icon: "sportscourt",
                     color: .purple
                 ) {
-                    viewModel.startExercise(type: .playing)
+                    viewModel.startExercise(type: .play)
                 }
 
                 QuickExerciseButton(
                     title: "Eğitim",
                     icon: "figure.strengthtraining.traditional",
-                    color: .orange
+                    color: .blue
                 ) {
                     viewModel.startExercise(type: .training)
                 }
@@ -229,9 +226,9 @@ struct ExerciseView: View {
 
     // MARK: - Helper Methods
 
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let hours = Int(duration) / 3600
-        let minutes = (Int(duration) % 3600) / 60
+    private func formatDuration(_ duration: Int) -> String {
+        let hours = duration / 60
+        let minutes = duration % 60
 
         if hours > 0 {
             return "\(hours)s \(minutes)dk"
@@ -241,9 +238,9 @@ struct ExerciseView: View {
     }
 }
 
-// MARK: - StatCard Component
+// MARK: - ExerciseStatCard Component
 
-struct StatCard: View {
+struct ExerciseStatCard: View {
     let title: String
     let value: String
     let icon: String
@@ -303,19 +300,17 @@ struct AddExerciseSheet: View {
     let pet: Pet
     @Binding var isPresented: Bool
 
-    @State private var selectedType: Exercise.ExerciseType = .walking
-
     var body: some View {
         NavigationStack {
             List {
-                ForEach(Exercise.ExerciseType.allCases, id: \.self) { type in
+                ForEach(ExerciseType.allCases, id: \.self) { type in
                     Button {
                         viewModel.startExercise(type: type)
                         isPresented = false
                     } label: {
                         HStack {
                             Image(systemName: type.icon)
-                                .foregroundStyle(type.color)
+                                .foregroundStyle(type.swiftUIColor)
                                 .frame(width: 30)
                             Text(type.rawValue)
                                 .foregroundStyle(.primary)
