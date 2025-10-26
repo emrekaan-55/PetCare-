@@ -57,7 +57,7 @@ struct MainTabView: View {
                 .tag(Tab.chat)
 
             // Calendar Tab
-            CalendarView()
+            CalendarTabView()
                 .tabItem {
                     Label("Takvim", systemImage: "calendar")
                 }
@@ -91,72 +91,18 @@ struct ExerciseTabView: View {
     }
 }
 
-struct PetChatView: View {
+struct CalendarTabView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var pets: [Pet]
+    @State private var selectedPet: Pet?
+
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: AppSpacing.lg) {
-                    Text("🤖 AI Chat")
-                        .font(AppFonts.largeTitle)
-                        .foregroundColor(AppColors.accent)
-
-                    Text("Burası AI chat ekranı olacak.\nEvcil hayvanın davranışlarını açıkla, AI analiz etsin.")
-                        .font(AppFonts.body)
-                        .foregroundColor(AppColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding()
+        AppointmentView(selectedPet: $selectedPet, modelContext: modelContext)
+            .onAppear {
+                if selectedPet == nil, let firstPet = pets.first {
+                    selectedPet = firstPet
                 }
-                .padding()
             }
-            .navigationTitle("Pet AI Chat")
-            .navigationBarTitleDisplayMode(.large)
-        }
-    }
-}
-
-struct CalendarView: View {
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: AppSpacing.lg) {
-                    Text("📅 Takvim")
-                        .font(AppFonts.largeTitle)
-                        .foregroundColor(AppColors.accent)
-
-                    Text("Burası takvim ekranı olacak.\nVeteriner randevuları, aşı takvimleri, hatırlatıcılar.")
-                        .font(AppFonts.body)
-                        .foregroundColor(AppColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                }
-                .padding()
-            }
-            .navigationTitle("Takvim")
-            .navigationBarTitleDisplayMode(.large)
-        }
-    }
-}
-
-struct ProfileView: View {
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: AppSpacing.lg) {
-                    Text("👤 Profil")
-                        .font(AppFonts.largeTitle)
-                        .foregroundColor(AppColors.accent)
-
-                    Text("Burası profil ekranı olacak.\nKullanıcı bilgileri, petler, ayarlar.")
-                        .font(AppFonts.body)
-                        .foregroundColor(AppColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                }
-                .padding()
-            }
-            .navigationTitle("Profil & Ayarlar")
-            .navigationBarTitleDisplayMode(.large)
-        }
     }
 }
 

@@ -17,7 +17,8 @@ struct PetCarePlusApp: App {
             Pet.self,
             DailyRoutine.self,
             HealthRecord.self,
-            Exercise.self
+            Exercise.self,
+            Appointment.self
         ])
 
         let modelConfiguration = ModelConfiguration(

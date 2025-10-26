@@ -93,6 +93,9 @@ final class Pet {
     @Relationship(deleteRule: .cascade)
     var exercises: [Exercise]
 
+    @Relationship(deleteRule: .cascade)
+    var appointments: [Appointment]
+
     // MARK: - Initialization
 
     init(
@@ -108,7 +111,8 @@ final class Pet {
         isActive: Bool = true,
         routines: [DailyRoutine] = [],
         healthRecords: [HealthRecord] = [],
-        exercises: [Exercise] = []
+        exercises: [Exercise] = [],
+        appointments: [Appointment] = []
     ) {
         self.id = id
         self.name = name
@@ -125,6 +129,7 @@ final class Pet {
         self.routines = routines
         self.healthRecords = healthRecords
         self.exercises = exercises
+        self.appointments = appointments
     }
 }
 
